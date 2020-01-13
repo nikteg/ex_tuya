@@ -12,7 +12,6 @@ defmodule ExTuya.Light do
   end
 
   def set_color(access_token, device_id, hue, saturation, brightness) do
-    # TODO: Fix here
     ExTuya.device_control(access_token, device_id, "colorSet", %{
       hue: hue,
       saturation: saturation,

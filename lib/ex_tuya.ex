@@ -20,8 +20,8 @@ defmodule ExTuya do
   def test_login() do
     {:ok, %{"access_token" => access_token}} =
       login(%Credentials{
-        userName: "me@sodapop.se",
-        password: "Password1",
+        userName: Application.fetch_env!(:ex_tuya, :username),
+        password: Application.fetch_env!(:ex_tuya, :password),
         countryCode: "46",
         bizType: "tuya"
       })
@@ -29,7 +29,10 @@ defmodule ExTuya do
     {:ok, devices} = get_devices(access_token)
 
     for device <- devices, device["dev_type"] == "light" do
-      Light.set_color(access_token, device["id"], 1, 1, 1)
+      # TODO Figure out how color works....
+      # maybe mitm app
+      Light.set_color(access_token, device["id"], 100, 1, 0.9)
+      # Light.turn_off(access_token, device["id"])
     end
   end
 
@@ -45,20 +48,31 @@ defmodule ExTuya do
   end
 
   def device_control(access_token, device_id, action, value, namespace \\ "control") do
-    payload = %{
-      accessToken: access_token,
-      devId: device_id,
-      value: value
-    }
+    payload =
+      if action == "colorSet" do
+        %{
+          accessToken: access_token,
+          devId: device_id,
+          color: value
+        }
+      else
+        %{
+          accessToken: access_token,
+          devId: device_id,
+          value: value
+        }
+      end
 
-    data = %{
-      header: %{
-        name: action,
-        namespace: namespace,
-        payloadVersion: 1
-      },
-      payload: payload
-    }
+    data =
+      %{
+        header: %{
+          name: action,
+          namespace: namespace,
+          payloadVersion: 1
+        },
+        payload: payload
+      }
+      |> IO.inspect()
 
     request =
       Mojito.post(
